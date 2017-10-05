@@ -5,13 +5,13 @@
 #include <string>
 using namespace std;
 
+
 class infixEvaluator {
 	// Public member functions
 public:
-	/** Evaluates a postfix expression.
+	/** Evaluates an infix expression.
 	@param expression The expression to be evaluated
 	@return The value of the expression
-	@throws Syntax_Error if a syntax error is detected
 	*/
 	int eval(const string& expression);
 
@@ -21,9 +21,10 @@ private:
 	This function pops the two operands off the operand
 	stack and applies the operator.
 	@param op A character representing the operator
-	@throws Syntax_Error if top is attempted on an empty stack
 	*/
 	int evalOp(char op);
+
+	string manipulateInput(const string& expression);
 
 	/** Determines whether a character is an operator.
 	@param ch The character to be tested
@@ -33,8 +34,13 @@ private:
 		return OPERATORS.find(ch) != string::npos;
 	}
 
+	int precedence(char op) const {
+		return PRECEDENCE[OPERATORS.find(op)];
+	}
+
 	// Data fields
-	string OPERATORS;
+	static const string OPERATORS;
+	static const int PRECEDENCE[];
 	stack<int> operandStack;
 	stack<char> operatorStack;
 };
