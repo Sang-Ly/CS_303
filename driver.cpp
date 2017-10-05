@@ -1,9 +1,9 @@
 
 #include "infixEvaluator.h"
-
+#include <iostream>
 int main()
 {
 	infixEvaluator theBest;
-	theBest.eval("ROFL");
+	std::cout << theBest.eval("1 + 2");
 	return 0;
 }
