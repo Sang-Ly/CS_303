@@ -13,9 +13,31 @@ const int infixEvaluator::PRECEDENCE[] = { 8, 8, 8, 8, 7, 6, 6, 6, 5, 5, 4, 4, 4
 */
 int infixEvaluator::eval(const string& expression) 
 {
-	std::cout << manipulateInput(" 190823 098f l;akjsdf");
-	return 0;
+	istringstream tokens(manipulateInput(expression));
+	char next_char;
+	while (tokens >> next_char) {
+		if (isdigit(next_char)){
+			tokens.putback(next_char);
+			int value;
+			tokens >> value;
+			operandStack.push(value);
+		}
+		else if (next_char == '(' || next_char == '[' || next_char == '{'){
+			operatorStack.push(next_char);
+		}
+		else if (next_char == ']' || next_char == ')' || next_char == '}'){
+			operandStack.push(evalOp(operatorStack.top()));
+		}
+		else if (isOperator(next_char)) {
+			
+		}
+		else{
+			throw std::exception("Invalid character encountered");
+		}
+	}
+	
 }
+
 
 string infixEvaluator::manipulateInput(const string& expression)
 {
@@ -30,4 +52,35 @@ string infixEvaluator::manipulateInput(const string& expression)
 		}
 	}
 	return combinedString;
+}
+
+
+int infixEvaluator::evalOp(char op)
+{
+	if (operandStack.empty())
+		throw std::exception("Stack is empty");
+	int rhs = operandStack.top();
+	operandStack.pop();
+	if (operandStack.empty())
+		throw std::exception("Stack is empty");
+	int lhs = operandStack.top();
+	operandStack.pop();
+	int result = 0;
+	switch (op) {
+	case '!':
+		break;
+	case '^':
+		break;
+	case '+': result = lhs + rhs;
+		break;
+	case '-': result = lhs - rhs;
+		break;
+	case '*': result = lhs * rhs;
+		break;
+	case '/': result = lhs / rhs;
+		break;
+	case '%': result = lhs % rhs;
+		break;
+	}
+	return result;
 }
