@@ -1,16 +1,13 @@
 #include <iostream>
+#include "Calculation.h"
 
 using namespace std;
 
-int main() {
-	int x = 3;
-	cout << ++++-x;
-	cout << endl;
-	/*string expression = "            sgsdgdfg";
+int main()
+{
+	Calculation finder;
+	int expression = finder.eval_expression("++- --7");
+	cout << expression;
 
-	Calculation calculate;
-	calculate.remove_spaces(expression);
-	calculate.eval_expression(expression);
-	system("pause");*/
-	return 0;
+
 }
