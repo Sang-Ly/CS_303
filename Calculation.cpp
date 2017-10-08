@@ -6,44 +6,26 @@
 #include <sstream> // istringstream 
 using namespace std;
 
-const string Calculation::OPERATORS = "! ^ * / % + - > = < & |";
-const string Calculation::special = "! < >";
-const int Calculation::PRECEDENCE[] = { 8, 8, 7, 6, 6, 6, 5, 5, 4, 4, 4, 4, 2, 1 };
+
+const string Calculation::OPERATORS = "-!^/*%D+";
+const int Calculation::PRECEDENCE[] = {8,8,7,6,6,6,5,5};
 
 bool Calculation::is_operator(char ch) const {
 	return OPERATORS.find(ch) != string::npos;
 }
-
-/*string Calculation::remove_spaces(string& expression) {
-
-	string temp;
-	for (int i = 0; i < expression.size(); i++) {
-		if (expression[i] != ' ') {
-			temp += expression[i];
-		}
-	}
-	expression = temp;
-	cout << expression << endl;
-	return expression;
-}*/
-
 
 int Calculation::eval_expression(const string& expression)
 {
 	istringstream tokens(expression);
 	char nextChar;
 	int operandCount = 0;
-	int operatorCount = 0;
 	int charCount = 0;
-	bool isUnary = false;
-	// Get tokens
-	while (tokens >> nextChar) 
-	{
+	bool operandMissing = true;
+	while (tokens >> nextChar){
 		if (isblank(nextChar))
 			break;
 		else
 			charCount++;
-		// if token is a digit push onto stack unless there is two digits in a row
 		if (isdigit(nextChar)){
 			if (operandCount == 1)
 				throw std::exception("Two Operands in a row @ char: " + charCount);
@@ -53,151 +35,210 @@ int Calculation::eval_expression(const string& expression)
 				tokens >> value;
 				operandStack.push(value);
 				operandCount++;
-				if (isUnary) {
-					//evaluate.
-				}
+				operandMissing = false;
 			}
-
 		}
 		else if (is_operator(nextChar)){
-			
+			if (operandCount == 1 && nextChar == '-'){
+				nextChar = 'D';
+			}
+			if ((nextChar == '(') || (operatorStack.empty()) || operandMissing)
+				if (nextChar == ')')
+					throw std::exception(" you Goofed");
+				else
+					operatorStack.push(nextChar);
+			else if ((precedence(nextChar) <= findStackPrecedence(operatorStack.top()) || (nextChar == ')'))){
+				while (!operatorStack.empty() && (operatorStack.top() != '(') && (precedence(nextChar) <= findStackPrecedence(operatorStack.top()))){
+					operatorEval(findStackPrecedence(operatorStack.top()));
+				}
+				operatorStack.push(nextChar);
+			}
+			else{
+				operatorStack.push(nextChar);
+			}
+			operandCount = 0;
 		}
+	}
+	while (!operatorStack.empty()){
+		operatorEval(findStackPrecedence(operatorStack.top()));
+	}
+	int answer;
+	answer = operandStack.top();
+	return answer;
 
-
-		// Check if Operator
 }
 
-/*int Calculation::eval_expression(const string& expression) {
-	istringstream tokens(expression);
-	char nextChar;
-	int operandCount = 0;
-	int operatorCount = 0;
-	int charCount = 0;
-	bool isUnary = false;
-	// Get tokens
-	while (tokens >> nextChar) {
-		if (isblank(nextChar))
+int Calculation::findStackPrecedence(char op)
+{
+	char holder;
+	if (operatorStack.size() <= 1)
+	{
+			return precedence(op);
+	}
+	holder = operatorStack.top();
+	operatorStack.pop();
+	if (holder == operatorStack.top() && ((holder == '-') || (holder == '+')))
+	{
+		operatorStack.push(holder);
+		return 8;
+	}
+	else if (holder == '=' && ((operatorStack.top() == '<') || (operatorStack.top() == '>')))
+	{
+		operatorStack.push(holder);
+		return 4;
+	}
+	else if (holder == '=' && ((operatorStack.top() == '=') || (operatorStack.top() == '!')))
+	{
+		operatorStack.push(holder);
+		return 3;
+	}
+	else if (holder == operatorStack.top() && (operatorStack.top() == '&'))
+	{
+		operatorStack.push(holder);
+		return 2;
+	}
+	else if (holder == operatorStack.top() && (operatorStack.top() == '|'))
+	{
+		operatorStack.push(holder);
+		return 1;
+	}
+	else
+	{
+		operatorStack.push(holder);
+		return precedence(op);
+	}
+}
+
+void Calculation::operatorEval(int prec)
+{
+	int calculation;
+	int lhs;
+	int rhs;
+	switch (prec)
+	{
+	case 8:
+		if (operatorStack.top() == '+')
+		{
+			calculation = operandStack.top();
+			operandStack.pop();
+			calculation++;
+			operandStack.push(calculation);
+			operatorStack.pop();
+			operatorStack.pop();
+		}
+		else if (operatorStack.top() == '!')
+		{
+			if (operandStack.top() != 0)
+			{
+				operatorStack.pop();
+				operandStack.push(0);
+			}
+			else
+			{
+				operatorStack.pop();
+				operandStack.push(1);
+			}
+		}
+		else if (operatorStack.top() == '-')
+		{
+			int remainder;
+			int count=0;
+			while ((!operatorStack.empty() && (operatorStack.top() == '-')))
+			{
+				count = count + 1;
+				operatorStack.pop();
+			}
+			calculation = operandStack.top();
+			operandStack.pop();
+			calculation = calculation - (count / 2);
+			remainder = count % 2;
+			if (remainder == 1)
+			{
+				calculation = calculation * -1;
+			}
+			operandStack.push(calculation);
+		}
+		break;
+	case 7:
+		rhs = operandStack.top();
+		operandStack.pop();
+		lhs = operandStack.top();
+		operandStack.pop();
+		calculation = pow(lhs, rhs);
+		operatorStack.pop();
+		operandStack.push(calculation);
+		break;
+	case 6:
+		if (operatorStack.top() == '*')
+		{
+			rhs = operandStack.top();
+			operandStack.pop();
+			lhs = operandStack.top();
+			operandStack.pop();
+			calculation = lhs * rhs;
+			operatorStack.pop();
+			operandStack.push(calculation);
 			break;
-		else
-			charCount++;
-		// if token is a digit push onto stack unless there is two digits in a row
-		if (isdigit(nextChar)) {
-			if (operandCount == 1)
-				throw std::exception("Two Operands in a row @ char: " + charCount);
-			else {
-				tokens.putback(nextChar);
-				int value;
-				tokens >> value;
-				operandStack.push(value);
-				operandCount++;
-				if (isUnary) {
-					//evaluate.
-				}
-			}
-
 		}
-
-		// Check if Operator
-		else if (is_operator(nextChar)) {
-			//if previous token was operator check to see if is a two character operator
-			if (operatorCount >=1) {
-
-				if (operatorStack.top() == nextChar) {
-					isUnary = true;
-
-					switch (nextChar) {
-					case 'D':
-						operatorStack.pop();
-						operatorStack.push('-');
-						operatorStack.push('D');
-						break;
-					case 'I':
-						operatorStack.pop();
-						operatorStack.push('+');
-						operatorStack.push('I');
-						break;
-					case '+':
-						operatorStack.pop();
-						operatorStack.push('I');
-						break;
-					case '-':
-						operatorStack.pop();
-						operatorStack.push('D');
-						break;
-					case '!': 
-						operatorStack.push(nextChar);
-						break;
-					}
-				}
-				else if (nextChar == '=') {
-					switch (operatorStack.top()) {
-					case '!':
-						operatorStack.pop();
-						operatorStack.push('E');
-						break;
-					case '>':
-						operatorStack.pop();
-						operatorStack.push('G');
-						break;
-					case '<':
-						operatorStack.pop();
-						operatorStack.push('L');
-						break;
-					default:
-						break;
-					}
-				}
-				else if (operatorStack.top() == '-') {
-					operatorStack.pop();
-					operatorStack.push('N');
-				} else {
-					throw std::exception("Two operators in a row");
-				}
-			}
-			else if (nextChar == '-') {
-				operatorStack.push('N');
-			} 
-			throw std::exception("");
-
+		else if (operatorStack.top() == '/')
+		{
+			rhs = operandStack.top();
+			operandStack.pop();
+			lhs = operandStack.top();
+			operandStack.pop();
+			calculation = lhs / rhs;
+			operatorStack.pop();
+			operandStack.push(calculation);
+			break;
 		}
-
-
+		else if (operatorStack.top() == '%')
+		{
+			rhs = operandStack.top();
+			operandStack.pop();
+			lhs = operandStack.top();
+			operandStack.pop();
+			calculation = lhs % rhs;
+			operatorStack.pop();
+			operandStack.push(calculation);
+		}
+		break;
+	case 5:
+		if (operatorStack.top() == 'D')
+		{
+			rhs = operandStack.top();
+			operandStack.pop();
+			lhs = operandStack.top();
+			operandStack.pop();
+			calculation = lhs - rhs;
+			operatorStack.pop();
+			operandStack.push(calculation);
+		}
+		else if (operatorStack.top() == '+')
+		{
+			rhs = operandStack.top();
+			operandStack.pop();
+			lhs = operandStack.top();
+			operandStack.pop();
+			calculation = lhs + rhs;
+			operatorStack.pop();
+			operandStack.push(calculation);
+		}
+		break;
+	case 4:
+		break;
+	case 3:
+		break;
+	case 2:
+		break;
+	case 1:
+		break;
 	}
-
-
-		throw std::exception("Invalid Character");
-
-	}
-	*/
-	
-	char next_char;
-
-
-	/*while (tokens >> next_char) {
-		if (isdigit(next_char)) {
-			tokens.putback(next_char);
-			int value;
-			tokens >> value;
-			operandStack.push(value);
-
-		}
-		else if (next_char == '(' || next_char == '[' || next_char == '{') {
-			operatorStack.push(next_char);
-		}
-		else if (next_char == ']' || next_char == ')' || next_char == '}') {
-			operandStack.push(evalOp(operatorStack.top()));
-		}
-		else if (isOperator(next_char)) {
-		}
-		else {
-			throw std::exception("Invalid character encountered");
-		}
-	}
-	return 0;*/
 }
+	
 
-int Calculation::precedence(char op) const {
-
+int Calculation::precedence(char op) const 
+{
+	
 	return PRECEDENCE[OPERATORS.find(op)];
 
 }
