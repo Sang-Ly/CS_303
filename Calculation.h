@@ -6,11 +6,14 @@ using namespace std;
 class Calculation
 {
 public:
+	void eval(int tokenReceived);
+	void eval(char tokenReceived);
 	int eval_expression(const string& expression);
+	int returnAnswer();
 private:
 	bool is_operator(char ch)const;
 	int precedence(char op) const;
-	int findStackPrecedence(char op);
+	char processOperator(char op, bool opSuccession, bool previousEntry);
 	void operatorEval(int prec);
 	stack<int> operandStack;
 	stack<char> operatorStack;
