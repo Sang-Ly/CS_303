@@ -1,8 +1,6 @@
 #include "Calculation.h"
 #include <string>
 #include <iostream>
-#include <cmath>
-#include <stack>
 #include <sstream> 
 using namespace std;
 int Calculation::precedence(char op) const { // Check the precedence of the operator
